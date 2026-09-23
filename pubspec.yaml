@@ -1,0 +1,87 @@
+name: meeting_app
+description: "Aadvi Fashion Institute Meeting App"
+publish_to: 'none'
+
+version: 1.1.4+16
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.0.5
+  page_transition: ^2.1.0
+  http: ^1.1.0
+  shared_preferences: ^2.2.1
+  cached_network_image: ^3.3.0
+  file_picker: ^8.3.3
+  flutter_html: ^3.0.0-beta.2
+  flutter_inappwebview: ^6.0.0
+  image_picker: ^1.0.4
+  intl: ^0.20.2
+  jitsi_meet_flutter_sdk: ^11.6.0
+  json_annotation: ^4.8.1
+  package_info_plus: ^9.0.1
+  path: ^1.8.3
+  razorpay_flutter: ^1.3.5
+  share_plus: ^12.0.2
+  shimmer: ^3.0.0
+  url_launcher: ^6.2.1
+  video_player: ^2.7.2
+  flutter_cached_pdfview: ^0.4.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.6
+  json_serializable: ^6.7.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/app_logo.png"
+  min_sdk_android: 21
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
