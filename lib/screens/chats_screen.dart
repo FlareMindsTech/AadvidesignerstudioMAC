@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:meeting_app/screens/student_notifications_screen.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
@@ -8,6 +9,7 @@ import '../config/api_config.dart';
 import '../widgets/app_drawer.dart';
 import 'chat_detail_screen.dart';
 import 'new_chat_screen.dart';
+import 'login_screen.dart';
 import '../widgets/profile_avatar.dart';
 
 class ChatsScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
   String? _currentUserId;
   String? _userRole;
   bool _isLoadingRole = true;
+  bool _isGuest = false;
   List<Conversation> _conversations = [];
   List<Conversation> _filteredConversations = [];
   bool _isLoading = true;
@@ -62,7 +65,19 @@ class _ChatsScreenState extends State<ChatsScreen> {
   }
 
   Future<void> _loadConversations() async {
+    final token = await StorageService.getToken();
+    if (token == null) {
+      if (mounted) {
+        setState(() {
+          _isGuest = true;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     setState(() {
+      _isGuest = false;
       _isLoading = true;
       _errorMessage = null;
     });
@@ -305,6 +320,70 @@ class _ChatsScreenState extends State<ChatsScreen> {
   }
 
   Widget _buildConversationsList() {
+    if (_isGuest) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5a189a).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 64,
+                  color: Color(0xFF5a189a),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Connect with Your Community',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sign in to chat with mentors, course instructors, and batchmates in real-time.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    PageTransition(
+                      type: PageTransitionType.rightToLeft,
+                      child: const LoginScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.login),
+                label: const Text('Sign In to Chat'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5a189a),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(

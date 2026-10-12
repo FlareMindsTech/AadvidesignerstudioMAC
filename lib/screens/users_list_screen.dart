@@ -102,6 +102,17 @@ class _UsersListScreenState extends State<UsersListScreen>
   }
 
   Future<void> _loadUsers() async {
+    final isGuest = await StorageService.isGuest();
+    if (isGuest || (_currentUserRole != 'admin' && _currentUserRole != 'owner')) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '';
+        });
+      }
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';

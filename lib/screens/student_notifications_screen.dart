@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/notification.dart' show AppNotification;
 import '../services/notification_service.dart';
+import '../services/storage_service.dart';
+import 'login_screen.dart';
 import 'package:intl/intl.dart';
 
 class StudentNotificationsScreen extends StatefulWidget {
@@ -16,11 +18,24 @@ class _StudentNotificationsScreenState
   List<AppNotification> _notifications = [];
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isGuest = false;
 
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    _checkGuestAndLoad();
+  }
+
+  Future<void> _checkGuestAndLoad() async {
+    final isGuest = await StorageService.isGuest();
+    if (mounted) {
+      setState(() {
+        _isGuest = isGuest;
+      });
+    }
+    if (!isGuest) {
+      _loadNotifications();
+    }
   }
 
   Future<void> _loadNotifications() async {
@@ -130,14 +145,17 @@ class _StudentNotificationsScreenState
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadNotifications,
-            tooltip: 'Refresh',
-          ),
+          if (!_isGuest)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadNotifications,
+              tooltip: 'Refresh',
+            ),
         ],
       ),
-      body: _isLoading
+      body: _isGuest
+          ? _buildGuestNotificationsState()
+          : _isLoading
           ? const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5a189a)),
@@ -340,6 +358,95 @@ class _StudentNotificationsScreenState
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestNotificationsState() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF5a189a), Color(0xFF7B2CBF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5a189a).withOpacity(0.3),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.notifications_active_rounded,
+                size: 46,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Stay Updated',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sign in or register to receive personalized notifications about new lessons, upcoming live sessions, and institution announcements.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5a189a),
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: const Color(0xFF5a189a).withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.login_rounded),
+                label: const Text(
+                  'Sign In / Register',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

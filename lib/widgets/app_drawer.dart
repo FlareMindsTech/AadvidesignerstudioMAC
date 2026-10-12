@@ -51,9 +51,14 @@ class _AppDrawerState extends State<AppDrawer> {
           _userName = user.fullName;
           _userInitials = user.initials;
           _photoUrl = user.photo;
+          _userRole = role?.toLowerCase() ?? 'student';
+        } else {
+          _userName = 'Guest Explorer';
+          _userInitials = 'G';
+          _photoUrl = null;
+          _userRole = 'guest';
         }
         _organizationCode = 'PZPHZN'; // Default organization code
-        _userRole = role?.toLowerCase();
       });
     }
   }
@@ -172,20 +177,37 @@ class _AppDrawerState extends State<AppDrawer> {
                     //     );
                     //   },
                     // ),
-                    _buildDrawerItem(
-                      icon: Icons.person,
-                      title: 'Edit Profile',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.rightToLeft,
-                            child: const EditProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
+                    if (_userRole == 'guest')
+                      _buildDrawerItem(
+                        icon: Icons.login_rounded,
+                        title: 'Sign In / Register',
+                        hasBadge: true,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            PageTransition(
+                              type: PageTransitionType.rightToLeft,
+                              child: const LoginScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (_userRole != 'guest')
+                      _buildDrawerItem(
+                        icon: Icons.person,
+                        title: 'Edit Profile',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            PageTransition(
+                              type: PageTransitionType.rightToLeft,
+                              child: const EditProfileScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     _buildDrawerItem(
                       icon: Icons.video_call,
                       title: 'Meetings',
@@ -468,6 +490,9 @@ class _AppDrawerState extends State<AppDrawer> {
     } else if (_userRole == 'admin') {
       label = 'ADMIN';
       color = const Color(0xFF5a189a);
+    } else if (_userRole == 'guest') {
+      label = 'GUEST';
+      color = Colors.teal;
     } else {
       label = 'STUDENT';
       color = const Color(0xFF5a189a);
@@ -486,7 +511,7 @@ class _AppDrawerState extends State<AppDrawer> {
           Icon(
             _userRole == 'owner' || _userRole == 'admin' 
                 ? Icons.admin_panel_settings 
-                : Icons.school,
+                : (_userRole == 'guest' ? Icons.explore_outlined : Icons.school),
             size: 12,
             color: color,
           ),

@@ -9,6 +9,7 @@ import '../services/meeting_service.dart';
 import '../models/meeting.dart';
 import 'create_meeting_screen.dart';
 import 'meeting_detail_screen.dart';
+import 'login_screen.dart';
 
 class MeetingListScreen extends StatefulWidget {
   const MeetingListScreen({super.key});
@@ -21,13 +22,22 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String? _userRole;
   String? _selectedFilter; // null means "All"
+  bool _isGuest = false;
 
   @override
   void initState() {
     super.initState();
     _selectedFilter = 'All';
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AppProvider>().loadMeetings();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final guest = await StorageService.isGuest();
+      if (mounted) {
+        setState(() {
+          _isGuest = guest;
+        });
+      }
+      if (!guest && mounted) {
+        context.read<AppProvider>().loadMeetings();
+      }
       _loadUserRole();
     });
   }
@@ -143,7 +153,9 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: _isGuest
+            ? _buildGuestMeetingState()
+            : Column(
           children: [
             // Header
             // Container(
@@ -1380,6 +1392,95 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildGuestMeetingState() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF5a189a), Color(0xFF7B2CBF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5a189a).withOpacity(0.3),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.video_camera_front_rounded,
+                size: 46,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Live Class Meetings',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Interactive live classes and video conferencing are available for registered students. Sign in or register to view and join meetings.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5a189a),
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: const Color(0xFF5a189a).withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.login_rounded),
+                label: const Text(
+                  'Sign In / Register',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

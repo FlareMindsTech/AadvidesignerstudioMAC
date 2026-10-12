@@ -82,6 +82,13 @@ class HttpInterceptorService {
 
   /// Automatically logs out user and navigates to login screen
   static Future<void> handleInvalidToken() async {
+    // If user is browsing in guest mode, NEVER force logout or show session expired
+    final isGuest = await StorageService.isGuest();
+    if (isGuest) {
+      debugPrint('Guest mode active. Ignoring invalid token logout.');
+      return;
+    }
+
     // Prevent multiple simultaneous logout attempts
     if (_isLoggingOut) {
       debugPrint('Logout already in progress, skipping...');
@@ -168,8 +175,8 @@ class HttpInterceptorService {
         const Duration(seconds: 30),
       );
 
-      // Check for invalid token
-      if (checkAuth && _isInvalidTokenResponse(response)) {
+      // Check for invalid token only if user was logged in
+      if (checkAuth && token != null && _isInvalidTokenResponse(response)) {
         await handleInvalidToken();
         throw Exception('Token is invalid. User has been logged out.');
       }
@@ -200,8 +207,8 @@ class HttpInterceptorService {
         const Duration(seconds: 30),
       );
 
-      // Check for invalid token
-      if (checkAuth && _isInvalidTokenResponse(response)) {
+      // Check for invalid token only if user was logged in
+      if (checkAuth && token != null && _isInvalidTokenResponse(response)) {
         await handleInvalidToken();
         throw Exception('Token is invalid. User has been logged out.');
       }
@@ -232,8 +239,8 @@ class HttpInterceptorService {
         const Duration(seconds: 30),
       );
 
-      // Check for invalid token
-      if (checkAuth && _isInvalidTokenResponse(response)) {
+      // Check for invalid token only if user was logged in
+      if (checkAuth && token != null && _isInvalidTokenResponse(response)) {
         await handleInvalidToken();
         throw Exception('Token is invalid. User has been logged out.');
       }
@@ -263,8 +270,8 @@ class HttpInterceptorService {
         const Duration(seconds: 30),
       );
 
-      // Check for invalid token
-      if (checkAuth && _isInvalidTokenResponse(response)) {
+      // Check for invalid token only if user was logged in
+      if (checkAuth && token != null && _isInvalidTokenResponse(response)) {
         await handleInvalidToken();
         throw Exception('Token is invalid. User has been logged out.');
       }
@@ -280,6 +287,17 @@ class HttpInterceptorService {
   /// If token is invalid, it will automatically logout and navigate to login screen
   /// Services should check response status code after calling this method
   static Future<void> checkResponseAndHandleAuth(http.Response response) async {
+    // If user is a guest (no token), do NOT log out or show session expired!
+    final isGuest = await StorageService.isGuest();
+    if (isGuest) {
+      return;
+    }
+
+    final token = await StorageService.getToken();
+    if (token == null || token.isEmpty) {
+      return;
+    }
+
     if (_isInvalidTokenResponse(response)) {
       await handleInvalidToken();
       // Don't throw exception - let services handle the response status code
@@ -292,6 +310,11 @@ class HttpInterceptorService {
   /// Call this method in services when token is null before making API calls
   /// This ensures users are logged out when token is missing
   static Future<void> checkTokenAndHandleLogout() async {
+    final isGuest = await StorageService.isGuest();
+    if (isGuest) {
+      return;
+    }
+
     final token = await StorageService.getToken();
     if (token == null) {
       debugPrint('Token is null. Triggering auto-logout...');

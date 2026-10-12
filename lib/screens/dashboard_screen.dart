@@ -79,9 +79,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = results[0] as model.User?;
     final role = results[1] as String?;
 
-    if (user != null && mounted) {
+    if (mounted) {
       setState(() {
-        _userRole = (user.role.isNotEmpty ? user.role : role ?? '')
+        _userRole = (user != null && user.role.isNotEmpty
+                ? user.role
+                : role ?? 'guest')
             .toLowerCase()
             .trim();
       });

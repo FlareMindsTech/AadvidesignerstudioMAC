@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import 'student_quiz_screen.dart';
 import 'video_player_screen.dart';
 import 'lesson_detail_screen.dart';
+import 'login_screen.dart';
 import '../utils/submodule_tree_builder.dart';
 
 class LessonListScreen extends StatefulWidget {
@@ -994,7 +995,55 @@ class _LessonListScreenState extends State<LessonListScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {
+          onTap: () async {
+            final isGuest = await StorageService.isGuest();
+            if (isGuest) {
+              if (!context.mounted) return;
+              final shouldLogin = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: Row(
+                    children: [
+                      Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      const Text('Sign In Required'),
+                    ],
+                  ),
+                  content: const Text(
+                    'Please sign in or register to watch this lesson, track your learning progress, and watch lessons.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Sign In / Register'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldLogin == true && context.mounted) {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const LoginScreen(),
+                  ),
+                );
+              }
+              return;
+            }
+
             Navigator.push(
               context,
               PageTransition(

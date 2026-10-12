@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../widgets/skeleton_loader.dart';
 import 'course_detail_screen.dart';
 import '../models/course.dart';
+import '../services/storage_service.dart';
+import 'login_screen.dart';
 
 class MyProgressScreen extends StatefulWidget {
   const MyProgressScreen({super.key});
@@ -19,11 +21,24 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
   List<CourseProgress> _courseProgress = [];
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isGuest = false;
 
   @override
   void initState() {
     super.initState();
-    _loadProgress();
+    _checkGuestAndLoad();
+  }
+
+  Future<void> _checkGuestAndLoad() async {
+    final isGuest = await StorageService.isGuest();
+    if (mounted) {
+      setState(() {
+        _isGuest = isGuest;
+      });
+    }
+    if (!isGuest) {
+      _loadProgress();
+    }
   }
 
   Future<void> _loadProgress() async {
@@ -77,7 +92,9 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: _isLoading && _courseProgress.isEmpty
+        child: _isGuest
+            ? _buildGuestProgressState()
+            : _isLoading && _courseProgress.isEmpty
             ? ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: 3,
@@ -481,6 +498,95 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestProgressState() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryColor, const Color(0xFF7B2CBF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.trending_up_rounded,
+                size: 46,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Track Your Learning Progress',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sign in or register to monitor your course completion, track quiz scores, and view your study milestones.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.login_rounded),
+                label: const Text(
+                  'Sign In / Register',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

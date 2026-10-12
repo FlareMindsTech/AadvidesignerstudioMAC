@@ -13,6 +13,7 @@ class StorageService {
   static const String _keyEmail = 'email';
   static const String _keyRole = 'role';
   static const String _keyPip = 'pip_enabled';
+  static const String _keyGuest = 'is_guest_mode';
 
   /// Initialize SharedPreferences once at startup
   static Future<void> init() async {
@@ -25,10 +26,37 @@ class StorageService {
     return _prefs!;
   }
 
+  // Set guest mode
+  static Future<bool> setGuestMode(bool isGuest) async {
+    try {
+      final prefs = await _instance;
+      if (isGuest) {
+        await clearUserData();
+      }
+      return await prefs.setBool(_keyGuest, isGuest);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Check if current session is guest
+  static Future<bool> isGuest() async {
+    try {
+      final prefs = await _instance;
+      final guest = prefs.getBool(_keyGuest) ?? false;
+      if (guest) return true;
+      final token = await getToken();
+      return token == null || token.isEmpty;
+    } catch (e) {
+      return true;
+    }
+  }
+
   // Save token
   static Future<bool> saveToken(String token) async {
     try {
       final prefs = await _instance;
+      await prefs.setBool(_keyGuest, false);
       return await prefs.setString(_keyToken, token);
     } catch (e) {
       return false;
@@ -118,12 +146,14 @@ class StorageService {
   }
 
   static Future<String?> getRole() async {
+    if (await isGuest()) return 'guest';
     final prefs = await _instance;
     return prefs.getString(_keyRole);
   }
 
   // Check if user is logged in
   static Future<bool> isLoggedIn() async {
+    if (await isGuest()) return false;
     final token = await getToken();
     return token != null && token.isNotEmpty;
   }

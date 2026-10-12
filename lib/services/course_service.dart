@@ -9,6 +9,7 @@ import '../models/module.dart';
 import '../models/user.dart';
 import 'storage_service.dart';
 import 'http_interceptor_service.dart';
+import 'module_service.dart';
 
 class CourseService {
   // Create Course (Paid with EMI/Full Payment or Free)
@@ -282,21 +283,19 @@ class CourseService {
     }
   }
 
-  // Get Single Course Details (Auth Required) - includes modules
+  // Get Single Course Details - includes modules (Supports both logged-in and guest users)
   static Future<Course> getSingleCourse(String courseId) async {
     try {
       final token = await StorageService.getToken();
-
-      if (token == null) {
-        throw CourseServiceException('Not authenticated. Please login again.');
-      }
 
       debugPrint(
           "Get Single Course API Url: ${ApiConfig.getSingleCourseEndpoint(courseId)}");
       final response = await http
           .get(
             Uri.parse(ApiConfig.getSingleCourseEndpoint(courseId)),
-            headers: ApiConfig.getAuthHeaders(token), // Auth required
+            headers: token != null
+                ? ApiConfig.getAuthHeaders(token)
+                : ApiConfig.headers,
           )
           .timeout(ApiConfig.timeout);
 
@@ -360,22 +359,20 @@ class CourseService {
     }
   }
 
-  // Get Single Course Details with Modules - returns course info + modules list
+  // Get Single Course Details with Modules - returns course info + modules list (Supports both logged-in and guest users)
   static Future<CourseWithModules> getSingleCourseWithModules(
       String courseId) async {
     try {
       final token = await StorageService.getToken();
-
-      if (token == null) {
-        throw CourseServiceException('Not authenticated. Please login again.');
-      }
 
       debugPrint(
           "Get Single Course with Modules API Url: ${ApiConfig.getSingleCourseEndpoint(courseId)}");
       final response = await http
           .get(
             Uri.parse(ApiConfig.getSingleCourseEndpoint(courseId)),
-            headers: ApiConfig.getAuthHeaders(token), // Auth required
+            headers: token != null
+                ? ApiConfig.getAuthHeaders(token)
+                : ApiConfig.headers,
           )
           .timeout(ApiConfig.timeout);
 
@@ -428,6 +425,40 @@ class CourseService {
             'Error Get Single Course with Modules Status: ${response.statusCode}');
         debugPrint(
             'Error Get Single Course with Modules Body: ${response.body}');
+
+        // If guest user and course details endpoint requires auth or fails, fallback to public modules endpoint
+        if (token == null) {
+          debugPrint('Guest mode: Falling back to public modules endpoint');
+          try {
+            final modules = await ModuleService.getCourseModules(courseId);
+            return CourseWithModules(
+              course: Course(
+                id: courseId,
+                title: '',
+                description: '',
+                category: '',
+                price: 0,
+                duration: '',
+                isLiveCourse: false,
+              ),
+              modules: modules,
+            );
+          } catch (fallbackError) {
+            debugPrint('Fallback to public modules endpoint also failed: $fallbackError');
+            return CourseWithModules(
+              course: Course(
+                id: courseId,
+                title: '',
+                description: '',
+                category: '',
+                price: 0,
+                duration: '',
+                isLiveCourse: false,
+              ),
+              modules: [],
+            );
+          }
+        }
 
         // Try to parse error if it's JSON, otherwise show generic message
         try {

@@ -9,6 +9,7 @@ import 'edit_profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'dart:async';
+import 'dart:io' show Platform;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -565,6 +566,44 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
+
+              // Apple Guideline 5.1.1(v): Continue as Guest ONLY on iOS (hidden on Android for Play Store, hidden in admin/owner login & during OTP)
+              if (Platform.isIOS && _isOtpLogin && !_showOtpField) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await StorageService.clearUserData();
+                    await StorageService.setGuestMode(true);
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushReplacement(
+                      PageTransition(
+                        type: PageTransitionType.fade,
+                        duration: const Duration(milliseconds: 300),
+                        child: const MainNavigationScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.explore_outlined, size: 20, color: primaryColor),
+                  label: Text(
+                    'Continue as Guest',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    side: BorderSide(
+                      color: primaryColor.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -21,12 +21,23 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _pictureInPictureEnabled = true;
   String _appVersion = '1.12.1.1';
+  bool _isGuest = false;
 
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
     _loadPipSetting();
+    _checkGuest();
+  }
+
+  Future<void> _checkGuest() async {
+    final isGuest = await StorageService.isGuest();
+    if (mounted) {
+      setState(() {
+        _isGuest = isGuest;
+      });
+    }
   }
 
   Future<void> _loadPipSetting() async {
@@ -105,6 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Clear local data
         await StorageService.clearUserData();
         await StorageService.clearSavedCredentials();
+        await StorageService.setGuestMode(false);
 
         if (!mounted) return;
 
@@ -223,6 +235,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_isGuest)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF5a189a).withOpacity(0.08),
+                              const Color(0xFF7B2CBF).withOpacity(0.04),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF5a189a).withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF5a189a),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.person_outline,
+                                  color: Colors.white, size: 24),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Guest Session',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Sign in or register to sync your preferences and access all features.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF5a189a),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text('Sign In',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Notification Settings
                     _buildSettingsItem(
                       title: 'Notification Settings',
@@ -287,20 +376,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 30),
 
 
-                    // Delete Account
-                    Center(
-                      child: TextButton(
-                        onPressed: _handleDeleteAccount,
-                        child: const Text(
-                          'Delete Account',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
+                    // Delete Account (Only for registered users)
+                    if (!_isGuest)
+                      Center(
+                        child: TextButton(
+                          onPressed: _handleDeleteAccount,
+                          child: const Text(
+                            'Delete Account',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
                     const SizedBox(height: 40),
 

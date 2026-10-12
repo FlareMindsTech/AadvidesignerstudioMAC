@@ -79,37 +79,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _buildScreensAndNavItems() {
-    final isStudent = _userRole.toLowerCase() == 'student' ||
-        _userRole.toLowerCase() == 'user';
+    final isAdminOrOwner = _userRole.toLowerCase() == 'admin' ||
+        _userRole.toLowerCase() == 'owner';
 
-    if (isStudent) {
-      // Student navigation: Dashboard, Courses, Chats, Profile
-      _screens = [
-        const DashboardScreen(),
-        const CourseListScreen(),
-        const ChatsScreen(),
-        const ProfileScreen(),
-      ];
-
-      _navItems = [
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Dashboard',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.book),
-          label: 'Courses',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline),
-          label: 'Chats',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-        ),
-      ];
-    } else {
+    if (isAdminOrOwner) {
       // Admin/Owner navigation: Dashboard, Courses, Users, Chats
       _screens = [
         const DashboardScreen(),
@@ -134,6 +107,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         const BottomNavigationBarItem(
           icon: Icon(Icons.chat_bubble_outline),
           label: 'Chats',
+        ),
+      ];
+    } else {
+      // Student & Guest navigation: Dashboard, Courses, Chats, Profile
+      _screens = [
+        const DashboardScreen(),
+        const CourseListScreen(),
+        const ChatsScreen(),
+        const ProfileScreen(),
+      ];
+
+      _navItems = [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Dashboard',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.book),
+          label: 'Courses',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.chat_bubble_outline),
+          label: 'Chats',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profile',
         ),
       ];
     }

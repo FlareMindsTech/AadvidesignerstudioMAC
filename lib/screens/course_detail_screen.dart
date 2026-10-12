@@ -16,10 +16,9 @@ import '../widgets/app_network_image.dart';
 import 'module_management_screen.dart';
 import 'lesson_list_screen.dart';
 import 'enrolled_students_screen.dart';
-import 'create_lesson_screen.dart';
 import '../utils/submodule_tree_builder.dart';
-import 'package:provider/provider.dart';
 import 'lesson_detail_screen.dart';
+import 'login_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -51,6 +50,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  // Feature flag: Set to true once Razorpay Dashboard activates EMI/Subscription plans
+  static const bool _enableEmiPayment = false;
 
   // Get the current course (use updated one if available, otherwise use widget.course)
   Course get _currentCourse => _course ?? widget.course;
@@ -94,8 +96,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       );
       if (mounted) {
         setState(() {
-          _course = courseWithModules
-              .course; // Update course with fresh data from API
+          if (courseWithModules.course.title.isNotEmpty) {
+            _course = courseWithModules.course;
+          } else {
+            _course = widget.course;
+          }
           _modules = courseWithModules.modules;
           _isLoadingModules = false;
         });
@@ -113,18 +118,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _checkSubscriptionExpiry();
         }
       }
-    } on CourseServiceException catch (e) {
+    } on CourseServiceException {
       if (mounted) {
         setState(() {
+          _course = widget.course;
           _isLoadingModules = false;
-          _errorMessage = e.message;
+          _errorMessage = '';
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
+          _course = widget.course;
           _isLoadingModules = false;
-          _errorMessage = 'Failed to load modules. Please try again.';
+          _errorMessage = '';
         });
       }
     }
@@ -498,8 +505,72 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
   }
 
+  Future<bool> _requireLogin({required String action}) async {
+    final isGuest = await StorageService.isGuest();
+    if (!isGuest) {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) return true;
+    }
+
+    if (!mounted) return false;
+    final shouldLogin = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+            const SizedBox(width: 8),
+            const Text('Sign In Required'),
+          ],
+        ),
+        content: Text(
+          'Please sign in or register to $action, track your learning progress, and watch lessons.',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Sign In / Register'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogin == true && mounted) {
+      await Navigator.push(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: const LoginScreen(),
+        ),
+      );
+      if (mounted) {
+        _loadCurrentUserRole();
+        _loadModules();
+        final token = await StorageService.getToken();
+        final isGuestNow = await StorageService.isGuest();
+        if (!isGuestNow && token != null && token.isNotEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Future<void> _enrollInCourse() async {
     if (_currentCourse.id == null) return;
+
+    if (!await _requireLogin(action: 'enroll in this course')) return;
 
     if (!_currentCourse.isFree) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -592,7 +663,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return _currentUserRole == 'student' || _currentUserRole == 'user';
   }
 
+  bool get _isGuest {
+    return _currentUserRole == null || _currentUserRole == 'guest';
+  }
+
   Future<void> _checkSubscriptionAndNavigate(Module module) async {
+    // If guest, prompt to sign in / register first
+    final loggedIn = await _requireLogin(action: 'access lessons');
+    if (!loggedIn || !mounted) return;
+
     // Allow access for admin/owner
     if (_isAdminOrOwner) {
       Navigator.push(
@@ -1188,7 +1267,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               ],
                             ),
                           ),
-                        if (_currentCourse.supportsEMI)
+                        if (_enableEmiPayment && _currentCourse.supportsEMI)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -1224,7 +1303,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ],
                     ),
                     // Show EMI Plans if available
-                    if (_currentCourse.supportsEMI &&
+                    if (_enableEmiPayment &&
+                        _currentCourse.supportsEMI &&
                         _currentCourse.paymentOptionsObj != null &&
                         _currentCourse.paymentOptionsObj!['emiPlans'] !=
                             null) ...[
@@ -1597,7 +1677,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         : _currentCourse.price;
     if (finalPrice < 0) finalPrice = 0;
 
-    final bool showBoth =
+    final bool showBoth = _enableEmiPayment &&
         _currentCourse.supportsFullPayment && _currentCourse.supportsEMI;
 
     // If both options are available, show selector first
@@ -1897,7 +1977,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
 
         // EMI Button
-        if (_currentCourse.supportsEMI)
+        if (_enableEmiPayment && _currentCourse.supportsEMI)
           OutlinedButton(
             onPressed: _isProcessingPayment ? null : _handleEMIPayment,
             style: OutlinedButton.styleFrom(
@@ -2284,6 +2364,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   Future<void> _handleFullPayment() async {
     if (_currentCourse.id == null) return;
 
+    if (!await _requireLogin(action: 'purchase this course')) return;
+
     setState(() {
       _isProcessingPayment = true;
       _errorMessage = '';
@@ -2570,6 +2652,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Future<void> _handleEMIPayment() async {
     if (_currentCourse.id == null) return;
+
+    if (!await _requireLogin(action: 'set up EMI payment')) return;
 
     // Get EMI plans from course data
     List<Map<String, dynamic>>? emiPlans;
@@ -3613,7 +3697,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
 
     final bool hasFreeLesson = checkSubmoduleHasFreeLesson(submodule);
-    final bool canAccessSubModule = hasFullAccess || hasFreeLesson;
+    final bool canAccessSubModule = hasFullAccess || hasFreeLesson || _isGuest;
 
     return Container(
       margin: EdgeInsets.only(
@@ -3638,6 +3722,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               borderRadius: BorderRadius.circular(12),
               onTap: hasLessons || hasQuiz || hasChildSubModules
                   ? () {
+                      if (_isGuest) {
+                        // Allow guest to expand/collapse topics to browse lesson topics
+                        setState(() {
+                          _expandedSubModules[submoduleId] = !isExpanded;
+                        });
+                        return;
+                      }
+
                       // Check payment/subscription before allowing expansion
                       if (canAccessSubModule) {
                         // User has access, allow expand/collapse
@@ -3912,7 +4004,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           size: 18,
           color: canAccessLesson ? AppTheme.primaryColor : Colors.grey[400],
         ),
-        onTap: () {
+        onTap: () async {
+          // If guest, prompt to sign in / register first
+          final loggedIn = await _requireLogin(action: 'watch this lesson');
+          if (!loggedIn || !mounted) return;
+
           if (canAccessLesson) {
             Navigator.push(
               context,
@@ -3959,7 +4055,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(8),
-              onTap: () {
+              onTap: () async {
+                // If guest, prompt to sign in / register first
+                final loggedIn = await _requireLogin(action: 'attempt this quiz');
+                if (!loggedIn || !mounted) return;
+
                 // Check access before allowing expansion
                 if (canAccessQuiz) {
                   // User has access, allow expand/collapse
@@ -4488,7 +4588,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: meetingUrl != null && meetingUrl.toString().isNotEmpty
-              ? () {
+              ? () async {
+                  final loggedIn = await _requireLogin(action: 'join this live session');
+                  if (!loggedIn || !mounted) return;
+
                   // TODO: Navigate to meeting or open URL
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

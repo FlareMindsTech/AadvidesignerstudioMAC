@@ -154,7 +154,9 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
   Widget build(BuildContext context) {
     // ONLY show full screen loading if we don't even have BASIC user info from local storage
     if (_isLoading && _user == null) return _buildLoading();
-    if (_user == null) return _buildError();
+    if (_user == null) {
+      return _errorMessage.isNotEmpty ? _buildError() : _buildGuestProfile();
+    }
 
     final bool isAdmin = _user!.role.toLowerCase() == 'admin' || _user!.role.toLowerCase() == 'owner';
 
@@ -363,6 +365,84 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       },
     );
   }
+
+  Widget _buildGuestProfile() => Scaffold(
+    backgroundColor: const Color(0xFFF5F7FA),
+    appBar: AppBar(
+      backgroundColor: AppTheme.primaryColor,
+      title: const Text('Profile'),
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person_outline_rounded,
+                size: 80,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Guest Explorer',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sign in to track your course progress, view enrolled subscriptions, and access all learning materials.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    PageTransition(
+                      type: PageTransitionType.rightToLeft,
+                      child: const LoginScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.login),
+                label: const Text(
+                  'Sign In / Register',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _buildLoading() => Scaffold(
     appBar: AppBar(backgroundColor: AppTheme.primaryColor, title: const Text('Profile'), foregroundColor: Colors.white),
