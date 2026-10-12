@@ -12,6 +12,7 @@ class StorageService {
   static const String _keyLastName = 'last_name';
   static const String _keyEmail = 'email';
   static const String _keyRole = 'role';
+  static const String _keyPip = 'pip_enabled';
 
   /// Initialize SharedPreferences once at startup
   static Future<void> init() async {
@@ -181,6 +182,25 @@ class StorageService {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  // --- App Settings ---
+  static Future<bool> setPipEnabled(bool enabled) async {
+    try {
+      final prefs = await _instance;
+      return await prefs.setBool(_keyPip, enabled);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> isPipEnabled() async {
+    try {
+      final prefs = await _instance;
+      return prefs.getBool(_keyPip) ?? true;
+    } catch (e) {
+      return true;
     }
   }
 }

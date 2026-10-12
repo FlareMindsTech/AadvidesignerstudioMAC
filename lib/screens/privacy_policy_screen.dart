@@ -40,27 +40,32 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> with WidgetsB
     });
 
     try {
-      final page = await CmsService.getPrivacyPolicy();
       if (mounted) {
         setState(() {
-          _page = page;
+          _page = CmsPage(
+            id: 'privacy',
+            slug: 'privacy-policy',
+            title: 'PRIVACY POLICY',
+            content: '''
+              <p>Your privacy is important to us. This Privacy Policy explains how we collect and safeguard your information.</p>
+              <h2>1. Information We Collect</h2>
+              <p>When you register, we collect your Mobile Number strictly for OTP authentication. We may also collect your First Name, Last Name, and Email Address if provided during your profile setup.</p>
+              <h2>2. Payment Information</h2>
+              <p>All transactions for premium courses are processed securely via Razorpay. We do not process, see, or store your credit card, debit card, or UPI details.</p>
+              <h2>3. Video Classes & Community Chat</h2>
+              <p>Your chat messages in our community groups are securely stored. Live interactive meetings are temporary and do not record your audio/video without explicit prior permission.</p>
+              <h2>4. Account and Data Deletion</h2>
+              <p>You have full ownership of your data. To permanently delete your account and all associated personal data from our systems, please contact the administrator via the Help Center or utilize the Delete Account function inside the Settings menu.</p>
+              <br><p><em>If you have any questions, please contact Aadvi Fashion Institute Support.</em></p>
+            ''',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
           _isLoading = false;
-        });
-      }
-    } on CmsServiceException catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.message;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Failed to load privacy policy. Please try again.';
-        });
-      }
+      // Ignored
     }
   }
 

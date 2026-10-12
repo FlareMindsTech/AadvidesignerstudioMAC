@@ -29,27 +29,29 @@ class _TermsScreenState extends State<TermsScreen> {
     });
 
     try {
-      final page = await CmsService.getTerms();
       if (mounted) {
         setState(() {
-          _page = page;
+          _page = CmsPage(
+            id: 'terms',
+            slug: 'terms-and-conditions',
+            title: 'TERMS & CONDITIONS',
+            content: '''
+              <p>Welcome to Aadvi Fashion Institution. By accessing our application and purchasing courses, you agree to abide by our educational guidelines.</p>
+              <h2>1. Course Content & Intellectual Property</h2>
+              <p>All video tutorials, sewing guides, and PDF materials are highly encrypted and remain strictly the intellectual property of Aadvi Fashion Institute. Unauthorized downloading, screen recording, pirating, or sharing of this content is strictly prohibited.</p>
+              <h2>2. Purchase & Refund Policy</h2>
+              <p>Because all of our educational products are instantly unlocked digital goods, <strong>all course purchases are strictly final and non-refundable</strong>.</p>
+              <h2>3. Community Guidelines</h2>
+              <p>Our Community Chat is designed for students to share ideas, ask questions, and collaborate. Any form of harassment, spam, or inappropriate behavior in the chat or Live Classes will result in a ban.</p>
+            ''',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
           _isLoading = false;
-        });
-      }
-    } on CmsServiceException catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.message;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Failed to load terms & conditions. Please try again.';
-        });
-      }
+      // Ignored
     }
   }
 

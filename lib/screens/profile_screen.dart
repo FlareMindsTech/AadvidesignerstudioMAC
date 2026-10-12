@@ -164,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 250,
+              expandedHeight: 280,
               pinned: true,
               backgroundColor: AppTheme.primaryColor,
               flexibleSpace: FlexibleSpaceBar(

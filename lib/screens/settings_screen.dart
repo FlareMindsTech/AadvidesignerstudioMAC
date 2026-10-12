@@ -26,6 +26,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadAppVersion();
+    _loadPipSetting();
+  }
+
+  Future<void> _loadPipSetting() async {
+    final pip = await StorageService.isPipEnabled();
+    if (mounted) {
+      setState(() {
+        _pictureInPictureEnabled = pip;
+      });
+    }
   }
 
   Future<void> _loadAppVersion() async {
@@ -245,10 +255,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         Switch(
                           value: _pictureInPictureEnabled,
-                          onChanged: (value) {
+                          onChanged: (value) async {
                             setState(() {
                               _pictureInPictureEnabled = value;
                             });
+                            await StorageService.setPipEnabled(value);
                           },
                           activeThumbColor: const Color(0xFF5a189a),
                           activeTrackColor: const Color(0xFF5a189a).withValues(alpha: 0.5),
@@ -312,6 +323,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '© ${DateTime.now().year} Aadvi Fashion Institution',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Developed by FlareMinds Technology & Services',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
                             ),
                           ),
                         ],

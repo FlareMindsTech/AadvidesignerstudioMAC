@@ -138,6 +138,9 @@ class JitsiService {
 
       // Define meeting options with enhanced config to prevent login prompts and browser opening
       // Key: Always provide userInfo with a valid displayName to avoid login prompts
+      // Get PiP setting from storage
+      final isPipEnabled = await StorageService.isPipEnabled();
+
       var options = JitsiMeetConferenceOptions(
         serverURL: "https://meet.jit.si",
         room: finalRoomName,
@@ -164,7 +167,7 @@ class JitsiService {
           "toolbox.alwaysVisible": false,
           
           // Enable useful features that don't require external access
-          "pip.enabled": true,
+          "pip.enabled": isPipEnabled,
           "chat.enabled": true,
           "raise-hand.enabled": true,
           "reactions.enabled": true,

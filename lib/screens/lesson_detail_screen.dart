@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/storage_service.dart';
 import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,6 +27,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _isBunnyLoading = true;
   bool _bunnyHasLoaded = false;
   bool _isFullScreen = false;
+  bool _isPipEnabled = true;
   String? _videoError;
   double _playbackSpeed = 1.0; // Default playback speed
   bool _showSpeedMenu = false;
@@ -36,12 +38,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadPipSetting();
     _enableScreenProtection();
     if (widget.lesson.isVideo &&
         widget.lesson.contentUrl != null &&
         widget.lesson.contentUrl!.isNotEmpty &&
         !_hasBunnyStreamVideo) {
       _initializeVideo();
+    }
+  }
+
+  Future<void> _loadPipSetting() async {
+    final pip = await StorageService.isPipEnabled();
+    if (mounted) {
+      setState(() {
+        _isPipEnabled = pip;
+      });
     }
   }
 
@@ -748,6 +760,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   javaScriptEnabled: true,
                   mediaPlaybackRequiresUserGesture: true,
                   allowsInlineMediaPlayback: true,
+                  allowsPictureInPictureMediaPlayback: _isPipEnabled,
                   iframeAllowFullscreen: true,
                   transparentBackground: true,
                 ),
