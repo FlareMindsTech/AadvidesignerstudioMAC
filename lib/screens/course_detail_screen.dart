@@ -10,6 +10,8 @@ import '../services/course_service.dart';
 import '../services/module_service.dart';
 import '../services/payment_service.dart';
 import '../services/razorpay_service.dart';
+import '../services/storekit_service.dart';
+import 'dart:io';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_network_image.dart';
@@ -60,14 +62,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    RazorpayService.initialize();
+    if (Platform.isIOS) {
+      StoreKitService.init();
+    } else {
+      RazorpayService.initialize();
+    }
     _loadCurrentUserRole();
     _loadModules();
   }
 
   @override
   void dispose() {
-    RazorpayService.dispose();
+    if (Platform.isIOS) {
+      StoreKitService.dispose();
+    } else {
+      RazorpayService.dispose();
+    }
     _searchController.dispose();
     super.dispose();
   }
@@ -2387,81 +2397,85 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             paymentData['subscriptionId'] ?? paymentData['localSubscriptionId'];
         final orderId = paymentData['orderId'];
 
-        if (subscriptionId != null && subscriptionId.toString().isNotEmpty) {
-          // Open Razorpay for subscription (Renewal/Recurring)
-          await RazorpayService.openSubscription(
-            keyId: paymentData['keyId'] ?? '',
-            subscriptionId: subscriptionId.toString(),
-            courseTitle: paymentData['courseTitle'] ?? _currentCourse.title,
-            courseId: _currentCourse.id!,
-            userEmail: _currentUserEmail,
-            userContact: _currentUserPhone,
-            onSuccess: (paymentResponse) async {
-              debugPrint(
-                'Razorpay Subscription Success Response: $paymentResponse',
-              );
-              final paymentId =
-                  paymentResponse['razorpay_payment_id'] ??
-                  paymentResponse['payment_id'] ??
-                  paymentResponse['paymentId'] ??
-                  '';
-              final signature =
-                  paymentResponse['razorpay_signature'] ??
-                  paymentResponse['signature'] ??
-                  '';
-              final subId =
-                  paymentResponse['razorpay_subscription_id'] ??
-                  paymentResponse['subscription_id'] ??
-                  paymentResponse['subscriptionId'] ??
-                  subscriptionId.toString();
+        if (Platform.isIOS) {
+          // iOS: use StoreKit (Apple In‑App Purchase)
+          final String productId = _currentCourse.id == 'diploma'
+              ? 'com.aadvi.fashion.DiplomainFashionDesig'
+              : 'com.aadvi.fashion.maxionlinecourse';
+          await StoreKitService.buyProduct(productId);
+          // After a successful purchase the StoreKit listener will mark the
+          // transaction as completed. You can add a backend call here to
+          // unlock the course for the user if needed.
+          } else {
+            if (subscriptionId != null && subscriptionId.toString().isNotEmpty) {
+              // Open Razorpay for subscription (Renewal/Recurring)
+              await RazorpayService.openSubscription(
+                keyId: paymentData['keyId'] ?? '',
+                subscriptionId: subscriptionId.toString(),
+                courseTitle: paymentData['courseTitle'] ?? _currentCourse.title,
+                courseId: _currentCourse.id!,
+                userEmail: _currentUserEmail,
+                userContact: _currentUserPhone,
+                onSuccess: (paymentResponse) async {
+                  debugPrint(
+                    'Razorpay Subscription Success Response: $paymentResponse',
+                  );
+                  final paymentId =
+                      paymentResponse['razorpay_payment_id'] ??
+                      paymentResponse['payment_id'] ??
+                      paymentResponse['paymentId'] ??
+                      '';
+                  final signature =
+                      paymentResponse['razorpay_signature'] ??
+                      paymentResponse['signature'] ??
+                      '';
+                  final subId =
+                      paymentResponse['razorpay_subscription_id'] ??
+                      paymentResponse['subscription_id'] ??
+                      paymentResponse['subscriptionId'] ??
+                      subscriptionId.toString();
 
-              await _verifySubscription(
-                subscriptionId: subId,
-                paymentId: paymentId,
-                signature: signature,
+                  await _verifySubscription(
+                    subscriptionId: subId,
+                    paymentId: paymentId,
+                    signature: signature,
+                  );
+                },
+                onError: (error) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error), backgroundColor: Colors.red),
+                    );
+                  }
+                },
               );
-            },
-            onError: (error) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(error), backgroundColor: Colors.red),
-                );
-              }
-            },
-          );
-        } else {
-          // Open regular payment gateway
-          await RazorpayService.openPayment(
-            keyId: paymentData['keyId'] ?? '',
-            orderId: orderId?.toString() ?? '',
-            amount: paymentData['amount'] ?? 0,
-            courseTitle: paymentData['courseTitle'] ?? _currentCourse.title,
-            courseId: _currentCourse.id!,
-            userEmail: _currentUserEmail,
-            userContact: _currentUserPhone,
-            onSuccess: (paymentResponse) async {
-              final paymentId = paymentResponse['razorpay_payment_id'] ?? '';
-              final signature = paymentResponse['razorpay_signature'] ?? '';
-              final rOrderId =
-                  paymentResponse['razorpay_order_id'] ??
-                  orderId?.toString() ??
-                  '';
+            } else {
+              // Open regular payment gateway
+              await RazorpayService.openPayment(
+                keyId: paymentData['keyId'] ?? '',
+                orderId: orderId?.toString() ?? '',
+                amount: paymentData['amount'] ?? 0,
+                courseTitle: paymentData['courseTitle'] ?? _currentCourse.title,
+                courseId: _currentCourse.id!,
+                userEmail: _currentUserEmail,
+                userContact: _currentUserPhone,
+                onSuccess: (paymentResponse) async {
+                  final paymentId = paymentResponse['razorpay_payment_id'] ?? '';
+                  final signature = paymentResponse['razorpay_signature'] ?? '';
+                  final rOrderId =
+                      paymentResponse['razorpay_order_id'] ??
+                      orderId?.toString() ??
+                      '';
 
-              await _verifyPayment(
-                orderId: rOrderId,
-                paymentId: paymentId,
-                signature: signature,
+                  await _verifyPayment(
+                    paymentId: paymentId,
+                    signature: signature,
+                    orderId: rOrderId,
+                  );
+                },
               );
-            },
-            onError: (error) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(error), backgroundColor: Colors.red),
-                );
-              }
-            },
-          );
-        }
+            }
+          }
       }
     } on PaymentServiceException catch (e) {
       if (mounted) {
