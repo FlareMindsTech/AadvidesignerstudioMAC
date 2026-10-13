@@ -2,7 +2,7 @@ name: meeting_app
 description: "Aadvi Fashion Institute Meeting App"
 publish_to: 'none'
 
-version: 1.1.4+16
+version: 1.0.0+1
 
 environment:
   sdk: ^3.10.7
@@ -17,11 +17,11 @@ dependencies:
   shared_preferences: ^2.2.1
   cached_network_image: ^3.3.0
   file_picker: ^8.3.3
-  flutter_html: ^3.0.0-beta.2
+  flutter_html: 3.0.0-beta.2
   flutter_inappwebview: ^6.0.0
   image_picker: ^1.0.4
   intl: ^0.20.2
-  jitsi_meet_flutter_sdk: ^11.6.0
+  jitsi_meet_flutter_sdk: ^13.2.0
   json_annotation: ^4.8.1
   package_info_plus: ^9.0.1
   path: ^1.8.3
