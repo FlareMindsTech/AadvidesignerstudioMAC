@@ -9,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'services/auth_service.dart';
 import 'services/storage_service.dart';
+import 'services/storekit_service.dart';
 import 'theme/app_theme.dart';
 
 // Fix for images not loading in release APK
@@ -31,6 +32,9 @@ Future<void> main() async {
   
   // Cache SharedPreferences instance
   await StorageService.init();
+
+  // Initialize StoreKit for iOS In-App Purchases
+  await StoreKitService.init();
 
   // Apply the SSL fix for release builds
   HttpOverrides.global = MyHttpOverrides();

@@ -1687,8 +1687,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         : _currentCourse.price;
     if (finalPrice < 0) finalPrice = 0;
 
-    final bool showBoth = _enableEmiPayment &&
-        _currentCourse.supportsFullPayment && _currentCourse.supportsEMI;
+    final bool showBoth = !Platform.isIOS &&
+        _enableEmiPayment &&
+        _currentCourse.supportsFullPayment &&
+        _currentCourse.supportsEMI;
 
     // If both options are available, show selector first
     if (showBoth) {
@@ -1986,8 +1988,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ),
           ),
 
-        // EMI Button
-        if (_enableEmiPayment && _currentCourse.supportsEMI)
+        // EMI Button (hidden on iOS)
+        if (!Platform.isIOS && _enableEmiPayment && _currentCourse.supportsEMI)
           OutlinedButton(
             onPressed: _isProcessingPayment ? null : _handleEMIPayment,
             style: OutlinedButton.styleFrom(
@@ -2027,6 +2029,45 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     ],
                   ),
           ),
+
+        // Restore Purchases button on iOS (Required by Apple Review Guideline 3.1.1)
+        if (Platform.isIOS) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () async {
+                try {
+                  await StoreKitService.restorePurchases();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Purchases restored successfully.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to restore purchases: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.restore, size: 16),
+              label: const Text(
+                'Restore Purchases',
+                style: TextStyle(
+                  fontSize: 13,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -2403,9 +2444,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ? 'com.aadvi.fashion.DiplomainFashionDesig'
               : 'com.aadvi.fashion.maxionlinecourse';
           await StoreKitService.buyProduct(productId);
-          // After a successful purchase the StoreKit listener will mark the
-          // transaction as completed. You can add a backend call here to
-          // unlock the course for the user if needed.
+       
           } else {
             if (subscriptionId != null && subscriptionId.toString().isNotEmpty) {
               // Open Razorpay for subscription (Renewal/Recurring)
@@ -2472,6 +2511,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     signature: signature,
                     orderId: rOrderId,
                   );
+                },
+                onError: (error) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error), backgroundColor: Colors.red),
+                    );
+                  }
                 },
               );
             }
@@ -2665,6 +2711,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   Future<void> _handleEMIPayment() async {
+    if (Platform.isIOS) return;
     if (_currentCourse.id == null) return;
 
     if (!await _requireLogin(action: 'set up EMI payment')) return;

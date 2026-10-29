@@ -14,9 +14,12 @@ class StoreKitService {
       debugPrint('❌ StoreKit not available');
       return;
     }
-    _iap.purchaseStream.listen(_listenToPurchases, onError: (e) {
-      debugPrint('❌ Purchase stream error: $e');
-    });
+    _iap.purchaseStream.listen(
+      _listenToPurchases,
+      onError: (e) {
+        debugPrint('❌ Purchase stream error: $e');
+      },
+    );
   }
 
   static void dispose() {
@@ -26,8 +29,9 @@ class StoreKitService {
   /// Trigger purchase for a given productId.
   static Future<void> buyProduct(String productId) async {
     if (!Platform.isIOS) return;
-    final ProductDetailsResponse response =
-        await _iap.queryProductDetails({productId});
+    final ProductDetailsResponse response = await _iap.queryProductDetails({
+      productId,
+    });
     if (response.notFoundIDs.isNotEmpty) {
       debugPrint('❌ Product $productId not found');
       return;
@@ -35,6 +39,17 @@ class StoreKitService {
     final ProductDetails product = response.productDetails.first;
     final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
     await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+  }
+
+  /// Restore previous purchases (Required by Apple Review Guideline 3.1.1)
+  static Future<void> restorePurchases() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      debugPrint('❌ Error restoring purchases: $e');
+      rethrow;
+    }
   }
 
   static void _listenToPurchases(List<PurchaseDetails> purchases) async {

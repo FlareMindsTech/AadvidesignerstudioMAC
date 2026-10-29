@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Meeting App</string>
+	<string>Aadvi Fashion Institution</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>meeting_app</string>
+	<string>Aadvi Fashion Institution</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -25,6 +25,10 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
@@ -67,17 +71,17 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 
-	<!-- Apple Security Policy Strings -->
+	<!-- Apple Security & Privacy Policy Strings -->
 	<key>NSCameraUsageDescription</key>
-	<string>We require camera access for you to participate in live interactive video classes.</string>
+	<string>Aadvi Fashion Institution requires camera access for you to participate in live interactive video classes and take profile photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We require microphone access so you can speak during live video classes.</string>
+	<string>Aadvi Fashion Institution requires microphone access so you can speak during live video classes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We require photo library access so you can upload and change your profile picture.</string>
+	<string>Aadvi Fashion Institution requires photo library access so you can upload profile pictures and assignments.</string>
 	<key>NSCalendarsUsageDescription</key>
-	<string>We require calendar access to help you schedule upcoming classes.</string>
+	<string>Aadvi Fashion Institution requires calendar access to help you schedule upcoming classes.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We require location access to verify student attendance.</string>
+	<string>Aadvi Fashion Institution requires location access to verify student attendance.</string>
 
 </dict>
 </plist>

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:meeting_app/screens/student_notifications_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -6,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../widgets/app_drawer.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../services/storekit_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -375,6 +377,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 30),
 
+
+                    // Restore Purchases (Required by Apple Review Guideline 3.1.1 on iOS)
+                    if (Platform.isIOS) ...[
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () async {
+                            try {
+                              await StoreKitService.restorePurchases();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Purchases restored successfully.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to restore purchases: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.restore, color: Color(0xFF5a189a)),
+                          label: const Text(
+                            'Restore Purchases',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF5a189a),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     // Delete Account (Only for registered users)
                     if (!_isGuest)
