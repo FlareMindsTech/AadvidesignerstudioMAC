@@ -1,8 +1,8 @@
 name: meeting_app
-description: "Aadvi Fashion Institute Meeting App"
+description: "Aadvi Fashion Institution App"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+10
 
 environment:
   sdk: ^3.10.7
